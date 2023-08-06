@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <cassert>
+#include <cstdint>
 #include <cstring>
 
 #include <dirent.h>
