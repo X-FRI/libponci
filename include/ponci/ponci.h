@@ -23,35 +23,35 @@
 /**
  * Creates a new cgroup with the @p name.
  */
-void cgroup_create(const char *name);
+void cgroup_create(const char * name);
 
 /**
  * Deletes a new cgroup with the @p name.
  * Only works if the cgroup is empty.
  */
-void cgroup_delete(const char *name);
+void cgroup_delete(const char * name);
 
 /**
  * Add the calling thread to the cgroup @p name.
  */
-void cgroup_add_me(const char *name);
+void cgroup_add_me(const char * name);
 
 /**
  * Adds the thread/process with @p pid to the cgroup @p name.
  */
-void cgroup_add_task(const char *name, pid_t tid);
+void cgroup_add_task(const char * name, pid_t tid);
 
 /**
  * Allows the @p cpus to be used in the cgroup @p name. @p size is the
  * length of the array @p cpus.
  */
-void cgroup_set_cpus(const char *name, const size_t *cpus, size_t size);
+void cgroup_set_cpus(const char * name, const size_t * cpus, size_t size);
 
 /**
  * Allows the memory modules @p mems to be used in the cgroup @p name.
  * @p size is the length of the array @p mems.
  */
-void cgroup_set_mems(const char *name, const size_t *mems, size_t size);
+void cgroup_set_mems(const char * name, const size_t * mems, size_t size);
 
 /**
  * Change the memory migrate option for cgroup @p name.
@@ -64,7 +64,7 @@ void cgroup_set_mems(const char *name, const size_t *mems, size_t size);
  *              pages allocated on the second mems entry will be moved to
  *              the second entry in the new mems array.
  */
-void cgroup_set_memory_migrate(const char *name, size_t flag);
+void cgroup_set_memory_migrate(const char * name, size_t flag);
 
 /**
  * Controlls if the CPUs set via cgroup_set_cpus are exclusive to @name cgroup
@@ -73,7 +73,7 @@ void cgroup_set_memory_migrate(const char *name, size_t flag);
  *   0 (default): Not exclusive
  *   1          : Exclusive
  */
-void cgroup_set_cpus_exclusive(const char *name, size_t flag);
+void cgroup_set_cpus_exclusive(const char * name, size_t flag);
 
 /**
  * Controlls if kernel allocations (memory pages / buffer data) is restricted to
@@ -84,7 +84,7 @@ void cgroup_set_cpus_exclusive(const char *name, size_t flag);
  *   1          : allocation is kept separate and memory is only allocated on
  *                the memory nodes set via cgroup_set_mems.
  */
-void cgroup_set_mem_hardwall(const char *name, size_t flag);
+void cgroup_set_mem_hardwall(const char * name, size_t flag);
 
 /**
  * Set the scheduling domain for cgroup @p name, i.e. the range the kernel
@@ -99,31 +99,31 @@ void cgroup_set_mem_hardwall(const char *name, size_t flag);
  *    4  : search nodes in a chunk of node [on NUMA system]
  *    5  : search system wide [on NUMA system]
  */
-void cgroup_set_scheduling_domain(const char *name, int flag);
+void cgroup_set_scheduling_domain(const char * name, int flag);
 
 /**
  * Freezes all tasks in the cgroup.
  */
-void cgroup_freeze(const char *name);
+void cgroup_freeze(const char * name);
 
 /**
  * Resumes all tasks in a cgroup.
  */
-void cgroup_thaw(const char *name);
+void cgroup_thaw(const char * name);
 
 /**
  * Blocks until the cgroup is frozen.
  */
-void cgroup_wait_frozen(const char *name);
+void cgroup_wait_frozen(const char * name);
 
 /**
  * Blocks until the cgroup is thawed.
  */
-void cgroup_wait_thawed(const char *name);
+void cgroup_wait_thawed(const char * name);
 
 /**
  * Kills all processes in the cgroup.
  */
-void cgroup_kill(const char *name);
+void cgroup_kill(const char * name);
 
 #endif /* end of include guard: ponci_h */

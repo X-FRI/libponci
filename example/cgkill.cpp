@@ -12,13 +12,16 @@
 
 #include "ponci/ponci.hpp"
 
-int main(int argc, char const *argv[]) {
-	for (int i = 1; i < argc; ++i) {
-		std::cout << R"(Going to kill cgroup ")" << argv[i] << R"(" ...)";
-		std::cout.flush();
-		cgroup_kill(argv[i]);
-		std::cout << "dead." << std::endl;
-	}
+int
+main(int argc, char const * argv[])
+{
+  for (int i = 1; i < argc; ++i)
+    {
+      std::cout << R"(Going to kill cgroup ")" << argv[i] << R"(" ...)";
+      std::cout.flush();
+      cgroup_kill(argv[i]);
+      std::cout << "dead." << std::endl;
+    }
 
-	return 0;
+  return 0;
 }

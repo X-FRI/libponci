@@ -30,15 +30,36 @@ extern "C" {
 
 /* Start of the C++ only functions. */
 // TODO add enum parameter to select L2 or L3
-inline std::bitset<64> get_cbm_mask() { return std::bitset<64>(get_cbm_mask_as_uint()); }
+inline std::bitset<64>
+get_cbm_mask()
+{
+  return std::bitset<64>(get_cbm_mask_as_uint());
+}
 
-inline void resgroup_create(const std::string &name) { resgroup_create(name.c_str()); }
-inline void resgroup_delete(const std::string &name) { resgroup_delete(name.c_str()); }
-inline void resgroup_add_me(const std::string &name) { resgroup_add_me(name.c_str()); }
-inline void resgroup_add_task(const std::string &name, const pid_t tid) { resgroup_add_task(name.c_str(), tid); }
+inline void
+resgroup_create(const std::string & name)
+{
+  resgroup_create(name.c_str());
+}
+inline void
+resgroup_delete(const std::string & name)
+{
+  resgroup_delete(name.c_str());
+}
+inline void
+resgroup_add_me(const std::string & name)
+{
+  resgroup_add_me(name.c_str());
+}
+inline void
+resgroup_add_task(const std::string & name, const pid_t tid)
+{
+  resgroup_add_task(name.c_str(), tid);
+}
 
-void resgroup_set_cpus(const std::string &name, const std::vector<size_t> &cpus);
-void resgroup_set_schemata(const std::string &name, const std::vector<size_t> &schematas);
+void resgroup_set_cpus(const std::string & name, const std::vector<size_t> & cpus);
+void resgroup_set_schemata(const std::string & name,
+                           const std::vector<size_t> & schematas);
 std::bitset<64> create_minimal_bitset();
 std::bitset<64> increase_bitset(std::bitset<64> bits);
 
