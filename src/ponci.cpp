@@ -33,227 +33,277 @@
 #include <unistd.h>
 
 // placeholder to be substituted by the names of a subsystem
-static const auto &SUBSYSTEM_PLACEHOLDER = *new std::string("%SUBSYSTEM%");
+static const auto & SUBSYSTEM_PLACEHOLDER = *new std::string("%SUBSYSTEM%");
 
 // list of subsystems, updated in constructor
-static std::vector<std::string> *subsystems;
+static std::vector<std::string> * subsystems;
 
 /////////////////////////////////////////////////////////////////
 // PROTOTYPES
 /////////////////////////////////////////////////////////////////
-static inline std::string cgroup_path(const char *name);
+static inline std::string cgroup_path(const char * name);
 
 static std::vector<int> get_tids_from_pid(int pid);
 
 static bool check_is_systemd();
-static void replace_subsystem_in_path(std::string &str, const std::string &to);
+static void replace_subsystem_in_path(std::string & str, const std::string & to);
 
 static void _constructor() __attribute__((constructor));
 
 /////////////////////////////////////////////////////////////////
 // EXPORTED FUNCTIONS
 /////////////////////////////////////////////////////////////////
-void cgroup_create(const char *name) {
-	const auto cgp = cgroup_path(name);
-	for (const auto &sub : *subsystems) {
-		auto temp = cgp;
-		replace_subsystem_in_path(temp, sub);
-		const int err = mkdir(temp.c_str(), S_IRWXU | S_IRWXG);
+void
+cgroup_create(const char * name)
+{
+  const auto cgp = cgroup_path(name);
+  for (const auto & sub : *subsystems)
+    {
+      auto temp = cgp;
+      replace_subsystem_in_path(temp, sub);
+      const int err = mkdir(temp.c_str(), S_IRWXU | S_IRWXG);
 
-		if (err != 0 && errno != EEXIST) throw std::runtime_error(strerror(errno));
-	}
+      if (err != 0 && errno != EEXIST)
+        throw std::runtime_error(strerror(errno));
+    }
 
-	errno = 0;
+  errno = 0;
 }
 
-void cgroup_delete(const char *name) {
-	const auto cgp = cgroup_path(name);
-	for (const auto &sub : *subsystems) {
-		auto temp = cgp;
-		replace_subsystem_in_path(temp, sub);
-		const int err = rmdir(temp.c_str());
+void
+cgroup_delete(const char * name)
+{
+  const auto cgp = cgroup_path(name);
+  for (const auto & sub : *subsystems)
+    {
+      auto temp = cgp;
+      replace_subsystem_in_path(temp, sub);
+      const int err = rmdir(temp.c_str());
 
-		if (err != 0) throw std::runtime_error(strerror(errno));
-	}
+      if (err != 0)
+        throw std::runtime_error(strerror(errno));
+    }
 }
 
-void cgroup_add_me(const char *name) {
-	auto me = static_cast<pid_t>(syscall(SYS_gettid));
-	cgroup_add_task(name, me);
+void
+cgroup_add_me(const char * name)
+{
+  auto me = static_cast<pid_t>(syscall(SYS_gettid));
+  cgroup_add_task(name, me);
 }
 
-void cgroup_add_task(const char *name, const pid_t tid) {
-	const auto cgp = cgroup_path(name);
-	for (const auto &sub : *subsystems) {
-		auto temp = cgp;
-		replace_subsystem_in_path(temp, sub);
+void
+cgroup_add_task(const char * name, const pid_t tid)
+{
+  const auto cgp = cgroup_path(name);
+  for (const auto & sub : *subsystems)
+    {
+      auto temp = cgp;
+      replace_subsystem_in_path(temp, sub);
 
-		temp += std::string("tasks");
-		append_value_to_file(temp, tid);
-	}
+      temp += std::string("tasks");
+      append_value_to_file(temp, tid);
+    }
 }
 
-void cgroup_set_cpus(const char *name, const size_t *cpus, size_t size) {
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "cpuset");
-	std::string filename = cgp + std::string("cpuset.cpus");
+void
+cgroup_set_cpus(const char * name, const size_t * cpus, size_t size)
+{
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "cpuset");
+  std::string filename = cgp + std::string("cpuset.cpus");
 
-	write_array_to_file(filename, cpus, size);
+  write_array_to_file(filename, cpus, size);
 }
 
-void cgroup_set_cpus(const std::string &name, const std::vector<unsigned char> &cpus) {
-	auto cgp = cgroup_path(name.c_str());
-	replace_subsystem_in_path(cgp, "cpuset");
-	std::string filename = cgp + std::string("cpuset.cpus");
+void
+cgroup_set_cpus(const std::string & name, const std::vector<unsigned char> & cpus)
+{
+  auto cgp = cgroup_path(name.c_str());
+  replace_subsystem_in_path(cgp, "cpuset");
+  std::string filename = cgp + std::string("cpuset.cpus");
 
-	write_vector_to_file(filename, cpus);
+  write_vector_to_file(filename, cpus);
 }
 
-void cgroup_set_mems(const char *name, const size_t *mems, size_t size) {
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "cpuset");
-	std::string filename = cgp + std::string("cpuset.mems");
+void
+cgroup_set_mems(const char * name, const size_t * mems, size_t size)
+{
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "cpuset");
+  std::string filename = cgp + std::string("cpuset.mems");
 
-	write_array_to_file(filename, mems, size);
+  write_array_to_file(filename, mems, size);
 }
 
-void cgroup_set_mems(const std::string &name, const std::vector<unsigned char> &mems) {
-	auto cgp = cgroup_path(name.c_str());
-	replace_subsystem_in_path(cgp, "cpuset");
-	std::string filename = cgp + std::string("cpuset.mems");
+void
+cgroup_set_mems(const std::string & name, const std::vector<unsigned char> & mems)
+{
+  auto cgp = cgroup_path(name.c_str());
+  replace_subsystem_in_path(cgp, "cpuset");
+  std::string filename = cgp + std::string("cpuset.mems");
 
-	write_vector_to_file(filename, mems);
+  write_vector_to_file(filename, mems);
 }
 
-void cgroup_set_memory_migrate(const char *name, size_t flag) {
-	assert(flag == 0 || flag == 1);
+void
+cgroup_set_memory_migrate(const char * name, size_t flag)
+{
+  assert(flag == 0 || flag == 1);
 
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "cpuset");
-	std::string filename = cgp + std::string("cpuset.memory_migrate");
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "cpuset");
+  std::string filename = cgp + std::string("cpuset.memory_migrate");
 
-	write_value_to_file(filename, flag);
+  write_value_to_file(filename, flag);
 }
 
-void cgroup_set_cpus_exclusive(const char *name, size_t flag) {
-	assert(flag == 0 || flag == 1);
+void
+cgroup_set_cpus_exclusive(const char * name, size_t flag)
+{
+  assert(flag == 0 || flag == 1);
 
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "cpuset");
-	std::string filename = cgp + std::string("cpuset.cpu_exclusive");
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "cpuset");
+  std::string filename = cgp + std::string("cpuset.cpu_exclusive");
 
-	write_value_to_file(filename, flag);
+  write_value_to_file(filename, flag);
 }
 
-void cgroup_set_mem_hardwall(const char *name, size_t flag) {
-	assert(flag == 0 || flag == 1);
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "cpuset");
-	std::string filename = cgp + std::string("cpuset.mem_hardwall");
+void
+cgroup_set_mem_hardwall(const char * name, size_t flag)
+{
+  assert(flag == 0 || flag == 1);
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "cpuset");
+  std::string filename = cgp + std::string("cpuset.mem_hardwall");
 
-	write_value_to_file(filename, flag);
+  write_value_to_file(filename, flag);
 }
 
-void cgroup_set_scheduling_domain(const char *name, int flag) {
-	assert(flag >= -1 && flag <= 5);
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "cpuset");
-	std::string filename = cgp + std::string("cpuset.sched_relax_domain_level");
+void
+cgroup_set_scheduling_domain(const char * name, int flag)
+{
+  assert(flag >= -1 && flag <= 5);
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "cpuset");
+  std::string filename = cgp + std::string("cpuset.sched_relax_domain_level");
 
-	write_value_to_file(filename, flag);
+  write_value_to_file(filename, flag);
 }
 
-void cgroup_freeze(const char *name) {
-	// never freeze top level cgroup
-	assert(strcmp(name, "") != 0);
+void
+cgroup_freeze(const char * name)
+{
+  // never freeze top level cgroup
+  assert(strcmp(name, "") != 0);
 
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "freezer");
-	std::string filename = cgp + std::string("freezer.state");
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "freezer");
+  std::string filename = cgp + std::string("freezer.state");
 
-	write_value_to_file(filename, "FROZEN");
+  write_value_to_file(filename, "FROZEN");
 }
 
-void cgroup_thaw(const char *name) {
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "freezer");
-	std::string filename = cgp + std::string("freezer.state");
+void
+cgroup_thaw(const char * name)
+{
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "freezer");
+  std::string filename = cgp + std::string("freezer.state");
 
-	write_value_to_file(filename, "THAWED");
+  write_value_to_file(filename, "THAWED");
 }
 
-void cgroup_wait_frozen(const char *name) {
-	// never freeze top level cgroup
-	assert(strcmp(name, "") != 0);
+void
+cgroup_wait_frozen(const char * name)
+{
+  // never freeze top level cgroup
+  assert(strcmp(name, "") != 0);
 
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "freezer");
-	std::string filename = cgp + std::string("freezer.state");
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "freezer");
+  std::string filename = cgp + std::string("freezer.state");
 
-	std::string temp;
-	while (temp != "FROZEN\n") {
-		temp = read_line_from_file(filename);
-	}
+  std::string temp;
+  while (temp != "FROZEN\n")
+    {
+      temp = read_line_from_file(filename);
+    }
 }
 
-void cgroup_wait_thawed(const char *name) {
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "freezer");
-	std::string filename = cgp + std::string("freezer.state");
+void
+cgroup_wait_thawed(const char * name)
+{
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "freezer");
+  std::string filename = cgp + std::string("freezer.state");
 
-	std::string temp;
-	while (temp != "THAWED\n") {
-		temp = read_line_from_file(filename);
-	}
+  std::string temp;
+  while (temp != "THAWED\n")
+    {
+      temp = read_line_from_file(filename);
+    }
 }
 
-void cgroup_kill(const char *name) {
-	auto tids = get_tids_from_pid(getpid());
+void
+cgroup_kill(const char * name)
+{
+  auto tids = get_tids_from_pid(getpid());
 
-	auto cgp = cgroup_path(name);
-	replace_subsystem_in_path(cgp, "cpuset");
+  auto cgp = cgroup_path(name);
+  replace_subsystem_in_path(cgp, "cpuset");
 
-	// get all pids
-	std::vector<__pid_t> pids = read_lines_from_file<__pid_t>(cgp + std::string("tasks"));
+  // get all pids
+  std::vector<__pid_t> pids = read_lines_from_file<__pid_t>(cgp + std::string("tasks"));
 
-	// send kill
-	for (__pid_t pid : pids) {
-		if (std::find(tids.begin(), tids.end(), pid) != tids.end()) {
-			// pid in tids -> we should not kill ourself :)
-		} else {
-			// pid not in tids
-			if (kill(pid, SIGTERM) != 0) {
-				throw std::runtime_error(strerror(errno));
-			}
-		}
-	}
+  // send kill
+  for (__pid_t pid : pids)
+    {
+      if (std::find(tids.begin(), tids.end(), pid) != tids.end())
+        {
+          // pid in tids -> we should not kill ourself :)
+        }
+      else
+        {
+          // pid not in tids
+          if (kill(pid, SIGTERM) != 0)
+            {
+              throw std::runtime_error(strerror(errno));
+            }
+        }
+    }
 
-	// wait until tasks empty
-	while (!pids.empty()) {
-		pids = read_lines_from_file<int>(cgp + std::string("tasks"));
-	}
+  // wait until tasks empty
+  while (!pids.empty())
+    {
+      pids = read_lines_from_file<int>(cgp + std::string("tasks"));
+    }
 
-	cgroup_delete(name);
+  cgroup_delete(name);
 }
 
 /////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
 /////////////////////////////////////////////////////////////////
 
-static inline std::string cgroup_path(const char *name) {
-	static const char *env = std::getenv("PONCI_PATH");
+static inline std::string
+cgroup_path(const char * name)
+{
+  static const char * env = std::getenv("PONCI_PATH");
 
-	std::string res(env != nullptr ? std::string(env) : std::string("/sys/fs/cgroup/"));
+  std::string res(env != nullptr ? std::string(env) : std::string("/sys/fs/cgroup/"));
 
-	res.append(SUBSYSTEM_PLACEHOLDER);
-	res.append("/");
+  res.append(SUBSYSTEM_PLACEHOLDER);
+  res.append("/");
 
-	if (strcmp(name, "") != 0) {
-		res.append(name);
-		res.append("/");
-	}
+  if (strcmp(name, "") != 0)
+    {
+      res.append(name);
+      res.append("/");
+    }
 
-	return res;
+  return res;
 }
 
 #if 0
@@ -389,81 +439,104 @@ template <> unsigned long string_to_T<unsigned long>(const std::string &s, std::
 }
 #endif
 
-static std::vector<int> get_tids_from_pid(const int pid) {
-	std::string path("/proc/" + std::to_string(pid) + "/task/");
-	dirent *dent;
-	DIR *srcdir = opendir(path.c_str());
+static std::vector<int>
+get_tids_from_pid(const int pid)
+{
+  std::string path("/proc/" + std::to_string(pid) + "/task/");
+  dirent * dent;
+  DIR * srcdir = opendir(path.c_str());
 
-	if (srcdir == nullptr) {
-		throw std::runtime_error(strerror(errno));
-	}
+  if (srcdir == nullptr)
+    {
+      throw std::runtime_error(strerror(errno));
+    }
 
-	std::vector<int> ret;
+  std::vector<int> ret;
 
-	while ((dent = readdir(srcdir)) != nullptr) {
-		struct stat st;
+  while ((dent = readdir(srcdir)) != nullptr)
+    {
+      struct stat st;
 
-		if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0) continue;
+      if (strcmp(dent->d_name, ".") == 0 || strcmp(dent->d_name, "..") == 0)
+        continue;
 
-		if (fstatat(dirfd(srcdir), dent->d_name, &st, 0) < 0) {
-			continue;
-		}
+      if (fstatat(dirfd(srcdir), dent->d_name, &st, 0) < 0)
+        {
+          continue;
+        }
 
-		if (S_ISDIR(st.st_mode)) {
-			std::size_t i;
-			ret.push_back(string_to_T<int>(std::string(dent->d_name), i));
-		}
-	}
-	closedir(srcdir);
-	return ret;
+      if (S_ISDIR(st.st_mode))
+        {
+          std::size_t i;
+          ret.push_back(string_to_T<int>(std::string(dent->d_name), i));
+        }
+    }
+  closedir(srcdir);
+  return ret;
 }
 
-static void replace_subsystem_in_path(std::string &str, const std::string &to) {
-	size_t start_pos = str.find(SUBSYSTEM_PLACEHOLDER);
-	assert(start_pos != std::string::npos);
-	str.replace(start_pos, SUBSYSTEM_PLACEHOLDER.length(), to);
+static void
+replace_subsystem_in_path(std::string & str, const std::string & to)
+{
+  size_t start_pos = str.find(SUBSYSTEM_PLACEHOLDER);
+  assert(start_pos != std::string::npos);
+  str.replace(start_pos, SUBSYSTEM_PLACEHOLDER.length(), to);
 }
 
 // check if the system is using systemd
-static bool check_is_systemd() {
-	bool ret = false;
+static bool
+check_is_systemd()
+{
+  bool ret = false;
 
-	// read /etc/mtab and check if it contains "cgroup /sys/fs/cgroup/systemd"
-	FILE *file = fopen("/etc/mtab", "r");
+  // read /etc/mtab and check if it contains "cgroup /sys/fs/cgroup/systemd"
+  FILE * file = fopen("/etc/mtab", "r");
 
-	if (file == nullptr) {
-		throw std::runtime_error(strerror(errno));
-	}
+  if (file == nullptr)
+    {
+      throw std::runtime_error(strerror(errno));
+    }
 
-	char temp[buf_size];
-	while (true) {
-		if (fgets(temp, buf_size, file) == nullptr && (feof(file) == 0)) {
-			// something is wrong. let's try to close the file and go home
-			fclose(file);
-			throw std::runtime_error("Error while reading file in libponci. Buffer to small?");
-		}
-		if (feof(file) != 0) break;
-		if (std::string(temp).find("cgroup /sys/fs/cgroup/systemd") != std::string::npos) {
-			ret = true;
-			break;
-		}
-	}
+  char temp[buf_size];
+  while (true)
+    {
+      if (fgets(temp, buf_size, file) == nullptr && (feof(file) == 0))
+        {
+          // something is wrong. let's try to close the file and go home
+          fclose(file);
+          throw std::runtime_error(
+            "Error while reading file in libponci. Buffer to small?");
+        }
+      if (feof(file) != 0)
+        break;
+      if (std::string(temp).find("cgroup /sys/fs/cgroup/systemd") != std::string::npos)
+        {
+          ret = true;
+          break;
+        }
+    }
 
-	if (fclose(file) != 0) {
-		throw std::runtime_error(strerror(errno));
-	}
+  if (fclose(file) != 0)
+    {
+      throw std::runtime_error(strerror(errno));
+    }
 
-	return ret;
+  return ret;
 }
 
-void _constructor() {
-	bool is_systemd = check_is_systemd();
+void
+_constructor()
+{
+  bool is_systemd = check_is_systemd();
 
-	subsystems = new std::vector<std::string>;
-	if (is_systemd) {
-		subsystems->emplace_back("cpuset");
-		subsystems->emplace_back("freezer");
-	} else {
-		subsystems->emplace_back("");
-	}
+  subsystems = new std::vector<std::string>;
+  if (is_systemd)
+    {
+      subsystems->emplace_back("cpuset");
+      subsystems->emplace_back("freezer");
+    }
+  else
+    {
+      subsystems->emplace_back("");
+    }
 }

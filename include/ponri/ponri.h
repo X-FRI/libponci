@@ -24,32 +24,32 @@
 /**
  * Creates a ressource group
  */
-void resgroup_create(const char *name);
+void resgroup_create(const char * name);
 
 /**
  * Deletes a ressource group
  */
-void resgroup_delete(const char *name);
+void resgroup_delete(const char * name);
 
 /**
  * Adds the calling thread to the ressource group
  */
-void resgroup_add_me(const char *name);
+void resgroup_add_me(const char * name);
 
 /**
  * Adss a given thread to the ressource group
  */
-void resgroup_add_task(const char *name, pid_t tid);
+void resgroup_add_task(const char * name, pid_t tid);
 
 /**
  * Sets the CPU mask of a ressource group
  */
-void resgroup_set_cpus(const char *name, const size_t *cpus, size_t size);
+void resgroup_set_cpus(const char * name, const size_t * cpus, size_t size);
 
 /**
  * Sets the schema for the ressource group. One schemata per NUMA domain
  */
-void resgroup_set_schemata(const char *name, const size_t *schematas, size_t size);
+void resgroup_set_schemata(const char * name, const size_t * schematas, size_t size);
 
 /**
  * Returns the maximum bit mask available.
